@@ -31,7 +31,10 @@ To use it inside your Python3 environment, you should initialise the class as fo
 ```
 import egeaML as eml
 ```
-
+or alternatively
+```
+from egeaML import *
+```
 
 ## Submitting Errata
 If you have errata for the book, please submit them via the [BUP](https://bup.egeaonline.it) website. In case of possible mistakes within the book-specific module, you can submit a fixed-version as a pull-request in this repository.
