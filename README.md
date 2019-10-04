@@ -1,5 +1,10 @@
 ## Helper functions for the book "Applied Machine Learning with Python"
 
+<p align="center">
+  <img src="cover.png" width="408" height="454" title="FrontCover">
+</p>
+
+
 This repository contains the Supplementary Material for the book "Applied Machine Learning with Python", written by Andrea Giussani.
 You can find details about the book on the [BUP](https://bup.egeaonline.it) website.  
 The books was written with the following specific versions of some popular libraries:
@@ -38,3 +43,14 @@ from egeaML import *
 
 ## Submitting Errata
 If you have errata for the book, please submit them via the [BUP](https://bup.egeaonline.it) website. In case of possible mistakes within the book-specific module, you can submit a fixed-version as a pull-request in this repository.
+
+## How to Cite this Book
+
+```tex
+@BOOK{giussani2019,
+	TITLE="Applied MAchine Learning with Python",
+	AUTHOR="Andrea Giussani",
+	YEAR="2019",
+	PUBLISHER="Egea"
+}
+```
