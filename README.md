@@ -1,7 +1,7 @@
 ## Helper functions for the book "Applied Machine Learning with Python"
 
 <p align="center">
-  <img src="cover.png" width="408" height="454" title="FrontCover">
+  <img src="cover.pdf" width="408" height="454" title="FrontCover">
 </p>
 
 
@@ -47,8 +47,8 @@ If you have errata for the book, please submit them via the [BUP](https://bup.eg
 ## How to Cite this Book
 
 ```tex
-@BOOK{giussani2019,
-	TITLE="Applied MAchine Learning with Python",
+@book{giussani2019,
+	TITLE="Applied Machine Learning with Python",
 	AUTHOR="Andrea Giussani",
 	YEAR="2019",
 	PUBLISHER="Egea"
