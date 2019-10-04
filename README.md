@@ -1,7 +1,7 @@
 ## Helper functions for the book "Applied Machine Learning with Python"
 
 <p align="center">
-  <img src="cover.jpg" width="428" height="684" title="FrontCover">
+  <img src="cover.jpg" width="428" height="584" title="FrontCover">
 </p>
 
 
