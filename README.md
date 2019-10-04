@@ -1,6 +1,8 @@
 ## Helper functions for the book "Applied Machine Learning with Python"
 
-![cover](cover.pdf)
+<p align="center">
+  <img src="cover.jpg" width="408" height="454" title="FrontCover">
+</p>
 
 
 This repository contains the Supplementary Material for the book "Applied Machine Learning with Python", written by Andrea Giussani.
