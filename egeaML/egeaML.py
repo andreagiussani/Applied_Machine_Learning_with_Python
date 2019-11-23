@@ -49,6 +49,7 @@ from gensim.utils import simple_preprocess
 from gensim.corpora.dictionary import Dictionary
 from gensim import models, utils, matutils
 from gensim.parsing.preprocessing import STOPWORDS
+from gensim.models.doc2vec import TaggedDocument
 
 #nltk
 from nltk.tokenize import sent_tokenize
@@ -102,9 +103,12 @@ class DataIngestion:
                                                                                random_state=42)
         return self.X_train, self.X_test, self.y_train, self.y_test
     
-    def plot_counts(self, variable_name, title_plot):
+    def plot_counts(self, variable_name, title_plot, yticklabels):
         plt.figure(figsize=(8, 5))
-        sns.heatmap(pd.DataFrame(self.df[variable_name].value_counts()), annot=True, fmt='g', cbar=False, cmap='Blues', annot_kws={"size": 20})
+        sns.set(font_scale=1.4)
+        sns.heatmap(pd.DataFrame(self.df[variable_name].value_counts()), annot=True,
+                    fmt='g', cbar=False, cmap='Blues', 
+                    annot_kws={"size": 20}, yticklabels=yticklabels)
         plt.title(title_plot)
 
 
@@ -878,6 +882,13 @@ class nlp:
             plt.text(x1+shift, x2+shift, w)
         plt.xlabel('Component 1')
         plt.ylabel('Component 2')
+        
+    @staticmethod
+    def tagging_doc2vec(docs):
+        mylist = list()
+        for i,s in enumerate(docs):
+            mylist.append(TaggedDocument(s, [i]))
+        return mylist
 
 
 class neural_network:
