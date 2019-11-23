@@ -1,40 +1,66 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
+from datetime import datetime
+import re
+import string
+import os
+import json
+import wget
+import csv
 import pandas as pd
 import numpy as np
+import xgboost as xgb
+
 import matplotlib.pyplot as plt
 import seaborn as sns
-import xgboost as xgb
+from scipy.integrate import quad
+from matplotlib.patches import Polygon
+from matplotlib.patches import ConnectionPatch
 from matplotlib.colors import ListedColormap
-from sklearn.linear_model import LogisticRegression
-from sklearn.svm import SVC
+plt.style.use('ggplot')
+
+#sklearn
+from sklearn.linear_model import LogisticRegression, LinearRegression, HuberRegressor, RANSACRegressor, Ridge, Lasso, ElasticNet
+from sklearn.svm import SVC, LinearSVC
 from sklearn.decomposition import PCA
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import VotingClassifier, BaggingClassifier,RandomForestClassifier
 from sklearn.model_selection import GridSearchCV, train_test_split,cross_val_score
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.metrics import confusion_matrix, accuracy_score, classification_report
+from sklearn.metrics import confusion_matrix, accuracy_score, classification_report, precision_recall_curve
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from sklearn.datasets import make_classification, make_moons, make_circles, make_blobs
 from sklearn.utils import shuffle
 from sklearn.preprocessing import StandardScaler, LabelEncoder, OneHotEncoder, MinMaxScaler
 from sklearn.model_selection import StratifiedKFold, KFold
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.pipeline import make_pipeline, Pipeline
 
-import re
 import nltk
 import gensim
-import string
+
+#gensim
+from gensim.parsing.preprocessing import strip_non_alphanum
+from gensim.parsing.preprocessing import strip_punctuation
+from gensim.parsing.preprocessing import remove_stopwords
+from gensim.parsing.preprocessing import strip_multiple_whitespaces
+from gensim.parsing.preprocessing import STOPWORDS
 from gensim.utils import simple_preprocess
 from gensim.corpora.dictionary import Dictionary
+from gensim import models, utils, matutils
 from gensim.parsing.preprocessing import STOPWORDS
+
+#nltk
+from nltk.tokenize import sent_tokenize
 from nltk.tokenize import word_tokenize
-from nltk.corpus import stopwords
+from nltk.tokenize import TweetTokenizer
+from nltk.tokenize import regexp_tokenize
 from nltk.stem.wordnet import WordNetLemmatizer
 from nltk.stem.porter import PorterStemmer
 from nltk.stem.snowball import SnowballStemmer
+from nltk.corpus import stopwords
 
-from datetime import datetime
-from matplotlib.colors import ListedColormap
+#keras
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, BatchNormalization, Activation
 from keras.optimizers import Adam
@@ -47,7 +73,7 @@ from keras.wrappers.scikit_learn import KerasClassifier
 class DataIngestion:
     
     def __init__(self,**args):
-        self.data = args.get('df')
+        self.filename = args.get('df')
         self.df = None
         self.col_to_drop = args.get('col_to_drop')
         self.col_target = args.get('col_target')
@@ -55,7 +81,7 @@ class DataIngestion:
         self.y = None
 
     def load_data(self):
-        self.df = pd.read_csv(self.data,index_col=False)
+        self.df = pd.read_csv(self.filename,index_col=False)
         self.df = self.df.loc[:, ~self.df.columns.str.match('Unnamed')]
         return self.df
 
@@ -69,6 +95,17 @@ class DataIngestion:
     def target(self):
         self.y=self.load_data()[self.col_target]
         return self.y
+    
+    def split_train_test(self, test_size=0.3, random_seed=42):
+        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(self.X, self.y, 
+                                                                               test_size=test_size,
+                                                                               random_state=42)
+        return self.X_train, self.X_test, self.y_train, self.y_test
+    
+    def plot_counts(self, variable_name, title_plot):
+        plt.figure(figsize=(8, 5))
+        sns.heatmap(pd.DataFrame(self.df[variable_name].value_counts()), annot=True, fmt='g', cbar=False, cmap='Blues', annot_kws={"size": 20})
+        plt.title(title_plot)
 
 
 class Preprocessing:
@@ -158,6 +195,111 @@ class model_fitting:
     """
 
 
+class utils():
+
+    def __init__(self):
+        pass
+
+    def from_json_to_pd(self, path, filename):
+        """
+        This function generate a pandas dataframe from a json file
+        Requirements: import json
+        Parameters
+        ----------
+            path: str
+                path to folder
+
+            filename: str
+                filename: must be a json file
+
+        Returns
+        -------
+            a pandas dataframe
+
+        Examples
+        -------
+            > filename = '/train.json'
+            > path = '/Users/thegiuss/Inspire/LTR'
+            > from_json_to_pd(path,filename)
+        """
+
+        path = path
+
+        with open(os.path.join(path, filename)) as file:  # open(path+'/train.json') as file:
+            json_train = json.load(file)
+
+        data_raw = pd.DataFrame.from_dict(json_train, orient='columns')
+        data_raw.reset_index(drop=True, inplace=True)
+        return data_raw
+
+
+
+    def download_data(self, foldername, urls, directory='./data' ):
+        """
+        This function download an online available dataset.
+        The dataset is going to be saved on a folder in the current working directory
+        Parameters
+        ----------
+            foldername: str
+                Folder name where the dowloaded data is going to be saved.
+                Example: 'IMDb'
+
+            squadurls: list
+                List of urls
+
+            directory: str
+                 Directory where the dataset will be stored
+
+        Examples
+        -------
+                > foldername = IMDb
+                > download_data(foldername=foldername, urls=[url_imdb]s, directory='./data_folder')
+
+        """
+        print("\nDownloading data...")
+        directory = os.path.expanduser(directory)
+        try:
+            if not os.path.exists(directory):
+                os.makedirs(directory)
+        except:
+            print("The " + directory + " folder already exists!")
+
+        dir_data = os.path.join(directory,foldername)
+        try:
+            if not os.path.exists(dir_data):
+                os.makedirs(dir_data)
+        except:
+            print("The " + foldername + " folder already exists!")
+
+        for dataurl in urls:
+            file = dataurl.split("/")[-1]
+            if os.path.exists(os.path.join(dir_data, file)):
+                print(file, "already downloaded")
+            else:
+                wget.download(url=dataurl, out=dir_data)
+        print("\nDownload Finished")
+
+
+class functions_utils:
+    
+    def __init__(self, data):
+        self.data = data
+    
+    def huber_loss(self,c=3):
+        return ((abs(self.data) < c) * 0.5 * self.data ** 2 + (abs(self.data) >= c) * -c * (0.5 * c - abs(self.data)))
+    
+    def logistic_loss(self):
+        return np.log(1+np.exp(-self.data))
+    
+    def hinge_loss(self):
+        return np.maximum(1 - self.data, 0)
+    
+    @staticmethod        
+    def normalProbabilityDensity(x):
+        constant = 1.0 / np.sqrt(2*np.pi)
+        return(constant * np.exp((-x**2) / 2.0) )
+
+
 class plots:
         
     def plot_pca(X):
@@ -192,16 +334,213 @@ class plots:
         ax[1].set(xlabel='component 1', ylabel='component 2',
                   title='principal components',
                   xlim=(-5, 5), ylim=(-3, 3.1))
+
         
-    def plot_loss():
-        hy = np.linspace(-3,3,1000)
-        plt.plot(hy, np.log(1+np.exp(-hy)), linestyle='-')
-        plt.plot(hy, np.maximum(1 - hy, 0), linestyle=':')
-        plt.xlim([-3,3])
-        plt.ylim([-0.05, 5])
+    def plot_loss(data, model1, model2, model1_name, model2_name, model1_abb, model2_abb, xlim=None, ylim=None):
+        plt.plot(data, model1, label=model1_name, linestyle='-')
+        plt.plot(data, model2, label=model2_name, linestyle=':')
         plt.ylabel("Loss")
-        plt.xlabel("Raw Model Output: $h_θ(x) \cdot y$")
-        plt.legend(['Logistic', 'Hinge'])
+        plt.xlabel("Raw Model Output: $y - f(x)$")
+        plt.legend([model1_abb, model2_abb])
+        plt.xlim(xlim)
+        plt.ylim(ylim)
+        plt.show()
+
+
+    def plotting_std(): 
+        #np.random.seed(916170)
+        
+        #Integrate PDF from -.6745 to .6745
+        result_n67_67, _ = quad(normalProbabilityDensity, -.6745, .6745, limit = 1000)
+        
+        # Integrate PDF from -2.698 to -.6745
+        result_n2698_67, _ = quad(normalProbabilityDensity, -2.698, -.6745, limit = 1000)
+        
+        # Integrate PDF from .6745 to 2.698
+        result_67_2698, _ = quad(normalProbabilityDensity, .6745, 2.698, limit = 1000)
+        
+        # Integrate PDF from 2.698 to positive infinity
+        result_2698_inf, _ = quad(normalProbabilityDensity, 2.698, np.inf, limit = 1000)
+        
+        # Integrate PDF from negative infinity to -2.698
+        result_ninf_n2698, _ = quad(normalProbabilityDensity, np.NINF, -2.698, limit = 1000)
+        
+        
+        # connection path is here: https://stackoverflow.com/questions/6146290/plotting-a-line-over-several-graphs
+        mu, sigma = 0, 1 # mean and standard deviation
+        s = np.random.normal(mu, sigma, 1000)
+        
+        fig, axes = plt.subplots(nrows = 2, ncols = 1, figsize=(9, 9))
+        
+        # rectangular box plot
+        bplot = axes[0].boxplot(s,
+                        vert=False,
+                        patch_artist=True, 
+                        showfliers=True, # This would show outliers (the remaining .7% of the data)
+                        positions = [0],
+                        boxprops = dict(linestyle='--', linewidth=2, color='Black', facecolor = 'red', alpha = .4),
+                        medianprops = dict(linestyle='-', linewidth=2, color='Yellow'),
+                        whiskerprops = dict(linestyle='-', linewidth=2, color='Blue', alpha = .4),
+                        capprops = dict(linestyle='-', linewidth=2, color='Black'),
+                        flierprops = dict(marker='o', markerfacecolor='green', markersize=10,
+                          linestyle='none', alpha = .4),
+                        widths = .3,
+                        zorder = 1)   
+        
+        
+        
+        axes[0].set_xlim(-4, 4)
+        axes[0].set_yticks([])
+        x = np.linspace(-4, 4, num = 100)
+        constant = 1.0 / np.sqrt(2*np.pi)
+        pdf_normal_distribution = constant * np.exp((-x**2) / 2.0)
+        
+        axes[0].annotate(r'',
+                    xy=(-.6745, .30), xycoords='data',
+                    xytext=(.6745, .30), textcoords='data',
+                    arrowprops=dict(arrowstyle="|-|",
+                                    connectionstyle="arc3")
+                    );
+        
+        axes[0].text(0, .36, r"IQR",  horizontalalignment='center', fontsize=18)
+        axes[0].text(0, -.24, r"Median", horizontalalignment='center', fontsize=18);
+        axes[0].text(-.6745, .18, r"Q1", horizontalalignment='center', fontsize=18);
+        axes[0].text(-2.698, .12, r"Q1 - 1.5*IQR", horizontalalignment='center', fontsize=16);
+        axes[0].text(.6745, .18, r"Q3", horizontalalignment='center', fontsize=18);
+        axes[0].text(2.698, .12, r"Q3 + 1.5*IQR", horizontalalignment='center', fontsize=16);
+        
+        axes[1].plot(x, pdf_normal_distribution, zorder= 2)
+        axes[1].set_xlim(-4, 4)
+        axes[1].set_ylim(0)
+        axes[1].set_ylabel('Probability Density', size = 20)
+        
+        ##############################
+        # lower box
+        con = ConnectionPatch(xyA=(-.6745, 0), xyB=(-.6745, 0),
+            coordsA="data", coordsB="data", axesA=axes[1], axesB=axes[0],
+            arrowstyle="-", linewidth=2, color="black", zorder = 2, alpha = .2)
+        axes[1].add_artist(con)
+        
+        # upper box
+        con = ConnectionPatch(xyA=(.6745, 0), xyB=(.6745, 0),
+            coordsA="data", coordsB="data", axesA=axes[1], axesB=axes[0],
+            arrowstyle="-", linewidth=2, color="black", zorder = 2, alpha = .2)
+        axes[1].add_artist(con)
+        
+        # lower whisker
+        con = ConnectionPatch(xyA=(-2.698, 0), xyB=(-2.698, 0),
+            coordsA="data", coordsB="data", axesA=axes[1], axesB=axes[0],
+            arrowstyle="-", linewidth=2, color="black", zorder = 2, alpha = .2)
+        axes[1].add_artist(con)
+        
+        # upper whisker
+        con = ConnectionPatch(xyA=(2.698, 0), xyB=(2.698, 0),
+            coordsA="data", coordsB="data", axesA=axes[1], axesB=axes[0],
+            arrowstyle="-", linewidth=2, color="black", zorder = 2, alpha = .2)
+        axes[1].add_artist(con)
+        
+        # Make the shaded center region to represent integral
+        a, b = -.6745, .6745
+        ix = np.linspace(a, b)
+        iy = normalProbabilityDensity(ix)
+        verts = [(-.6745, 0)] + list(zip(ix, iy)) + [(.6745, 0)]
+        poly = Polygon(verts, facecolor='red', edgecolor='0.2', alpha = .4)
+        axes[1].add_patch(poly)
+        axes[1].text(0, .04, r'{0:.0f}%'.format(result_n67_67*100),
+                 horizontalalignment='center', fontsize=18)
+        
+        ##############################
+        a, b = -2.698, -.6745# integral limits
+        
+        # Make the shaded region
+        ix = np.linspace(a, b)
+        iy = normalProbabilityDensity(ix)
+        verts = [(a, 0)] + list(zip(ix, iy)) + [(b, 0)]
+        poly = Polygon(verts, facecolor='blue', edgecolor='0.2', alpha = .4)
+        axes[1].add_patch(poly);
+        axes[1].text(-1.40, .04, r'{0:.2f}%'.format(result_n2698_67*100),
+                 horizontalalignment='center', fontsize=18);
+        
+        ##############################
+        a, b = .6745, 2.698 # integral limits
+        
+        # Make the shaded region
+        ix = np.linspace(a, b)
+        iy = normalProbabilityDensity(ix)
+        verts = [(a, 0)] + list(zip(ix, iy)) + [(b, 0)]
+        poly = Polygon(verts, facecolor='blue', edgecolor='0.2', alpha = .4)
+        axes[1].add_patch(poly);
+        axes[1].text(1.40, .04, r'{0:.2f}%'.format(result_67_2698*100),
+                 horizontalalignment='center', fontsize=18);
+        
+        ##############################
+        a, b = 2.698, 4 # integral limits
+        
+        # Make the shaded region
+        ix = np.linspace(a, b)
+        iy = normalProbabilityDensity(ix)
+        verts = [(a, 0)] + list(zip(ix, iy)) + [(b, 0)]
+        poly = Polygon(verts, facecolor='green', edgecolor='0.2', alpha = .4)
+        axes[1].add_patch(poly);
+        axes[1].text(3.3, .04, r'{0:.2f}%'.format(result_2698_inf*100),
+                 horizontalalignment='center', fontsize=18);
+        
+        ##############################
+        a, b = -4, -2.698 # integral limits
+        
+        # Make the shaded region
+        ix = np.linspace(a, b)
+        iy = normalProbabilityDensity(ix)
+        verts = [(a, 0)] + list(zip(ix, iy)) + [(b, 0)]
+        poly = Polygon(verts, facecolor='green', edgecolor='0.2', alpha = .4)
+        axes[1].add_patch(poly);
+        axes[1].text(-3.3, .04, r'{0:.2f}%'.format(result_ninf_n2698*100),
+                 horizontalalignment='center', fontsize=18);
+        
+        ##############################
+        xTickLabels = [r'$-4\sigma$',
+                       r'$-3\sigma$',
+                       r'$-2\sigma$',
+                       r'$-1\sigma$',
+                       r'$0\sigma$',
+                       r'$1\sigma$',
+                       r'$2\sigma$',
+                       r'$3\sigma$',
+                       r'$4\sigma$']
+        
+        yTickLabels = ['0.00',
+                       '0.05',
+                       '0.10',
+                       '0.15',
+                       '0.20',
+                       '0.25',
+                       '0.30',
+                       '0.35',
+                       '0.40']
+        
+        # Make both x axis into standard deviations
+        axes[0].set_xticklabels(xTickLabels, fontsize = 14)
+        axes[1].set_xticklabels(xTickLabels, fontsize = 14)
+        
+        # Only the PDF needs y ticks
+        axes[1].set_yticklabels(yTickLabels, fontsize = 14)
+        
+        ##############################
+        # Add -2.698, -.6745, .6745, 2.698 text without background
+        axes[1].text(-.6745,.41, r'{0:.4f}'.format(-.6745) + '$\sigma$', horizontalalignment='center', fontsize=14,
+                    bbox={'facecolor':'white', 'edgecolor':'none', 'pad':5});
+        
+        axes[1].text(.6745, .410, r'{0:.4f}'.format(.6745) + '$\sigma$', horizontalalignment='center', fontsize=14,
+                    bbox={'facecolor':'white', 'edgecolor':'none', 'pad':5});
+        
+        axes[1].text(-2.698, .410, r'{0:.3f}'.format(-2.698) + '$\sigma$', horizontalalignment='center', fontsize=14,
+                    bbox={'facecolor':'white', 'edgecolor':'none', 'pad':5});
+        
+        axes[1].text(2.698, .410, r'{0:.3f}'.format(2.698) + '$\sigma$', horizontalalignment='center', fontsize=14,
+                    bbox={'facecolor':'white', 'edgecolor':'none', 'pad':5});
+        
+        fig.tight_layout()
+        plt.show()
 
 
 class classification_plots:
@@ -216,7 +555,6 @@ class classification_plots:
             - test_size: equal to 0.3 by default.
                          It can take any numer between 0 and 1
         """
-        plt.style.use('ggplot')
         X_train,X_test,y_train,y_test = train_test_split(X,y, test_size=test_size,\
                                                          random_state=42)
         df = pd.DataFrame(dict(height=X_train.iloc[:,1], weight=X_train.iloc[:,0],\
@@ -225,8 +563,8 @@ class classification_plots:
         fig, ax = plt.subplots()
         grouped = df.groupby('label')
         for key, group in grouped:
-            group.plot(ax=ax, kind='scatter', x='weight', y='height', label=key, \
-                       color=colors[key],figsize=(5, 5))
+            group.plot(ax=ax, kind='scatter', x='height', y='weight', label=key, \
+                       color=colors[key],figsize=(8, 5))
         plt.legend(["Training Class Female", "Training Class Man"],fontsize=10)
         plt.show()
         
@@ -253,8 +591,8 @@ class classification_plots:
         for key, group in grouped_:
             group.plot(ax=ax, kind='scatter', x='weight', y='height', label=key, 
                        color=colors[key],figsize=(5, 5))
-        plt.xlabel('Weight', fontsize=14)
-        plt.ylabel('Height', fontsize=14)
+        plt.xlabel('Height', fontsize=14)
+        plt.ylabel('Weight', fontsize=14)
         plt.legend(["Training Female", "Training Man", "Test Pred Female", "Test Pred Man"]
                    ,fontsize=10)
         plt.show()
@@ -276,8 +614,8 @@ class classification_plots:
         plt.scatter(X_test.weight[errs], X_test.height[errs], facecolors='red', s=150)
         plt.scatter(X_test.weight, X_test.height, 
                     facecolors=colors, edgecolors='k', s=50, alpha=1)
-        plt.xlabel('Weight', fontsize=14)
-        plt.ylabel('Height', fontsize=14)
+        plt.xlabel('Height', fontsize=14)
+        plt.ylabel('Weight', fontsize=14)
         plt.tight_layout()
         
     
@@ -299,7 +637,7 @@ class classification_plots:
          for further details.
         """
         mat = confusion_matrix(y_test, y_pred)
-        sns.heatmap(mat.T, square=True, annot=True, fmt='d', cbar=False, cmap=cmap)
+        sns.heatmap(mat.T, square=True, annot=True, fmt='d', cbar=False, cmap=cmap, annot_kws={"size": 12})
         plt.xlabel('True label')
         plt.ylabel('Predicted label')
         plt.show()
@@ -329,6 +667,18 @@ class classification_plots:
         plt.xlabel('True label')
         plt.ylabel('Predicted label')
         plt.show()
+        
+    def plot_precision_recall(y_test, y_pred):
+        # Precision/Recall Curve
+        precision, recall, thresholds = precision_recall_curve(y_test, y_pred)
+        plt.figure(figsize=(8,6))
+        plt.plot(recall, precision, lw=2, color='navy')
+        plt.title('Precision-Recall curve on the Diabetes dataset')
+        plt.ylabel('Precision')
+        plt.xlabel('Recall')
+        plt.xlim=([0.0, 1.05])
+        plt.ylim=([0.0, 1.05])
+        plt.show()
 
     def knn_boundaries(X_train,X_test,y_train,y_test,n_neighbors):
         """
@@ -336,7 +686,7 @@ class classification_plots:
         """
         # Create color maps
         cmap_bold = ListedColormap(['#FF3333', '#3333FF']) 
-        cmap_light = ListedColormap(['#FF9999', '#9999FF'])
+        cmap_light = ListedColormap(['#e6eff0', '#096b76'])# (['#FF9999', '#9999FF'])
         clf = KNeighborsClassifier(n_neighbors=n_neighbors)
         clf.fit(X_train, y_train)
         
@@ -350,11 +700,13 @@ class classification_plots:
         
         # Put the result into a color plot
         Z = Z.reshape(xx.shape)
-        plt.figure()
-        plt.pcolormesh(xx, yy, Z, cmap=cmap_light)
+        plt.figure(figsize=(8, 6))
+        plt.pcolormesh(xx, yy, Z, cmap=cmap_light, linewidths=40)
+    
         
         # Plot also the training points
-        plt.scatter(X_test.iloc[:, 0], X_test.iloc[:, 1], c=y_test, cmap=cmap_bold)
+        plt.scatter(X_test.iloc[:, 0], X_test.iloc[:, 1], c=y_test, 
+                    cmap=cmap_bold, linewidths=3)
         plt.xlim(xx.min(), xx.max())
         plt.ylim(yy.min(), yy.max())
         plt.title("Binary classification (k = %i)"
@@ -367,7 +719,7 @@ class classification_plots:
         
     def plot_hist(data,features_name,target_name):
         data = pd.DataFrame(data, columns=features_name)
-        plt.figure(figsize=(20, 15))
+        plt.figure(figsize=(20, 16))
         features = list(data)
         for i, col in enumerate(features):
             plt.subplot(3, len(features)/2 , i+1)
@@ -448,24 +800,125 @@ class xgboost:
         plt.savefig('n_estimators_vs_learning_rate.png')
 
 
-class NLP:
-    def __init__(self,text):
-        self.text = text
+class nlp:
+    def __init__(self):
+        pass
     
-    def clean_text(self):
+    @staticmethod
+    def clean_text(text):
         new_string = []
-        for word in gensim.utils.simple_preprocess(self.text):
+        for word in gensim.utils.simple_preprocess(text):
             if word not in gensim.parsing.preprocessing.STOPWORDS and len(word) > 2:
                 stem_ = SnowballStemmer('english')
                 lemma = WordNetLemmatizer()
                 new = stem_.stem(lemma.lemmatize(word, pos='v'))
                 new_string.append(new)
         return new_string
+        
+    @staticmethod
+    def simple_tokenization(doc):
+        """This function performs simple tokenization"""
+        tok = re.findall('(\\w+)', doc.lower())
+        docs = ' '.join(tok)
+        return word_tokenize(docs)
+    
+    @staticmethod
+    def parsing_text(doc):
+        """This function removes stopwords and puctuaction"""
+        return strip_multiple_whitespaces(strip_punctuation(remove_stopwords(doc.lower())))
+
+    
+    @staticmethod
+    def top_words(corpus, dictionary, doc, n_words=5):
+        """
+        This function returns the most n important words in a particular document
+        ----------
+        Params:
+                tfidf: obj
+                    tfidf matrix
+                dictionary: obj
+                    This is the gensim dictionary
+                doc: obj
+                The specific corpus we wish to extract the top words
+                n_words: int
+                    Number of top words to be shown
+        """
+        tfidf = models.TfidfModel(corpus)
+        tf_obj = tfidf[doc]
+        soterd_obj = sorted(tf_obj, key=lambda x: x[1], reverse=True)
+        top_words = list()
+        for obj in soterd_obj[:n_words]:
+            top_words.append("{0:s} ({1:01.03f})".format(dictionary[obj[0]], obj[1]))
+        return top_words
+    
+    @staticmethod
+    def analogy(model, x1, x2, y1):
+        result = model.most_similar(positive=[y1, x2], negative=[x1])
+        return result[0][0]
+    
+    @staticmethod
+    def display_similarity(model, words=None, sample=0):
+        """
+        This methods plot the desired list of words in a 2-dim cartesian plane
+        based on their similarity.
+        
+        """
+        if words == None:
+            if sample > 0:
+                words = np.random.choice(list(model.vocab.keys()), sample)
+            else:
+                words = [ word for word in model.vocab ]
+            
+        word_vectors = np.array([model[w] for w in words])
+        pca = PCA().fit_transform(word_vectors)[:,:2]
+        shift = 0.1
+        plt.figure(figsize=(8,6))
+        plt.scatter(pca[:,0], pca[:,1], edgecolors='k', c='b')
+        for w, (x1,x2) in zip(words, pca):
+            plt.text(x1+shift, x2+shift, w)
+        plt.xlabel('Component 1')
+        plt.ylabel('Component 2')
 
 
 class neural_network:
     
-    def plot_decision_boundary(func, X, y, figsize=(6, 6)):
+    def plot_data(X, y):
+        """
+        This function plots the raw data
+        """
+        plt.figure(figsize = (8, 6))
+        plt.plot(X[y==0, 0], X[y==0, 1], 'or', alpha=0.5, label=0)
+        plt.plot(X[y==1, 0], X[y==1, 1], 'ob', alpha=0.5, label=1, marker="^")
+        plt.xlim((min(X[:, 0])-0.1, max(X[:, 0])+0.1))
+        plt.ylim((min(X[:, 1])-0.1, max(X[:, 1])+0.1))
+        plt.legend()
+    
+     
+    def make_multiclass(n=500, d=2, k=3):
+        
+        """
+        N: # points per class
+        D: #dimensionality
+        K: # of classes  
+        """
+        
+        np.random.seed(0)
+        X = np.zeros((n*k, d))
+        y = np.zeros(n*k)
+        for j in range(k):
+            ix = range(n*j, n*(j+1))
+            r = np.linspace(0.0,1,n)
+            t = np.linspace(j*4,(j+1)*4,n) + np.random.randn(n)*0.2
+            X[ix] = np.c_[r*np.sin(t), r*np.cos(t)]
+            y[ix] = j
+        fig = plt.figure(figsize=(6, 6))
+        plt.scatter(X[:, 0], X[:, 1], c=y, s=40, cmap='RdYlBu', alpha=0.8)
+        plt.xlim([-1,1])
+        plt.ylim([-1,1])
+        return X, y
+    
+    def plot_decision_boundary(func, X, y):
+        figsize=(6, 6)
         amin, bmin = X.min(axis=0) - 0.1
         amax, bmax = X.max(axis=0) + 0.1
         hticks = np.linspace(amin, amax, 101)
@@ -489,6 +942,15 @@ class neural_network:
         plt.scatter(X[:, 0], X[:, 1], c=y, cmap=cm_bright)
         plt.xlim(amin, amax)
         plt.ylim(bmin, bmax)
+        
+    def plot_loss_accuracy(history):
+        historydf = pd.DataFrame(history.history, index=history.epoch)
+        plt.figure(figsize=(10, 6))
+        historydf.plot(ylim=(0, max(1, historydf.values.max())), 
+                       style=['+-','.-'] )
+        loss = history.history['loss'][-1]
+        acc = history.history['acc'][-1]
+        plt.title('Loss: %.3f, Accuracy: %.3f' % (loss, acc))
 
     def plot_multiclass_decision_boundary(model, X, y):
         x_min, x_max = X[:, 0].min() - 0.1, X[:, 0].max() + 0.1
@@ -502,110 +964,7 @@ class neural_network:
         Z = Z.reshape(xx.shape)
         fig = plt.figure(figsize=(8, 8))
         plt.contourf(xx, yy, Z, cmap=plt.cm.Spectral, alpha=0.8)
-        plt.scatter(X[:, 0], X[:, 1], c=y, s=40, cmap=plt.cm.RdYlBu)
+        plt.scatter(X[:, 0], X[:, 1], c=y, s=40, cmap='RdYlBu')
         plt.xlim(xx.min(), xx.max())
-        plt.ylim(yy.min(), yy.max())
+        plt.ylim(yy.min(), yy.max()) 
         
-    def plot_data(X, y, figsize=None):
-        if not figsize:
-            figsize = (8, 6)
-        plt.figure(figsize=figsize)
-        plt.plot(X[y==0, 0], X[y==0, 1], 'or', alpha=0.5, label=0)
-        plt.plot(X[y==1, 0], X[y==1, 1], 'ob', alpha=0.5, label=1, marker="^")
-        plt.xlim((min(X[:, 0])-0.1, max(X[:, 0])+0.1))
-        plt.ylim((min(X[:, 1])-0.1, max(X[:, 1])+0.1))
-        plt.legend()
-    
-    def plot_loss_accuracy(history):
-        historydf = pd.DataFrame(history.history, index=history.epoch)
-        plt.figure(figsize=(10, 6))
-        historydf.plot(ylim=(0, max(1, historydf.values.max())), 
-                       style=['+-','.-'] )
-        loss = history.history['loss'][-1]
-        acc = history.history['acc'][-1]
-        plt.title('Loss: %.3f, Accuracy: %.3f' % (loss, acc))
-    
-    def plot_loss(history):
-        historydf = pd.DataFrame(history.history, index=history.epoch)
-        plt.figure(figsize=(8, 6))
-        historydf.plot(ylim=(0, historydf.values.max()))
-        plt.title('Loss: %.3f' % history.history['loss'][-1])
-        
-    def plot_confusion_matrix(model, y, y_pred):
-        plt.figure(figsize=(10, 8))
-        mat = pd.DataFrame(confusion_matrix(y, y_pred))
-        sns.heatmap(mat, cbar=False, annot=True, fmt='d',
-                    cmap='YlGnBu', alpha=0.8, vmin=0)
-        plt.xlabel('Predicted label')
-        plt.ylabel('True label')
-    
-    def plot_compare_histories(history_list, name_list,
-                               plot_accuracy=True):
-        dflist = []
-        for history in history_list:
-            h = {key: val for key, val in 
-                 history.history.items() if not key.startswith('val_')}
-            dflist.append(pd.DataFrame(h, index=history.epoch))
-    
-        historydf = pd.concat(dflist, axis=1)
-    
-        metrics = dflist[0].columns
-        idx = pd.MultiIndex.from_product([name_list, metrics], 
-                                         names=['model', 'metric'])
-        historydf.columns = idx
-        
-        plt.figure(figsize=(6, 8))
-    
-        ax = plt.subplot(211)
-        historydf.xs('loss', axis=1, 
-                     level='metric').plot(ylim=(0,1), ax=ax)
-        plt.title("Loss")
-        
-        if plot_accuracy:
-            ax = plt.subplot(212)
-            historydf.xs('acc', axis=1,
-                         level='metric').plot(ylim=(0,1), ax=ax)
-            plt.title("Accuracy")
-            plt.xlabel("Epochs")
-    
-        plt.tight_layout()
-        
-    def make_sine_wave():
-        c = 3
-        num = 2400
-        step = num/(c*4)
-        np.random.seed(0)
-        x0 = np.linspace(-c*np.pi, c*np.pi, num)
-        x1 = np.sin(x0)
-        noise = np.random.normal(0, 0.1, num) + 0.1
-        noise = np.sign(x1) * np.abs(noise)
-        x1  = x1 + noise
-        x0 = x0 + (np.asarray(range(num)) / step) * 0.3
-        X = np.column_stack((x0, x1))
-        y = np.asarray([int((i/step)%2==1) for i in range(len(x0))])
-        return X, y
-    
-    def make_multiclass(N=500, D=2, K=3):
-        
-        """
-        N: # points per class
-        D: #dimensionality
-        K: # of classes  
-        """
-        
-        np.random.seed(0)
-        X = np.zeros((N*K, D))
-        y = np.zeros(N*K)
-        for j in range(K):
-            ix = range(N*j, N*(j+1))
-            # radius
-            r = np.linspace(0.0,1,N)
-            # theta
-            t = np.linspace(j*4,(j+1)*4,N) + np.random.randn(N)*0.2
-            X[ix] = np.c_[r*np.sin(t), r*np.cos(t)]
-            y[ix] = j
-        fig = plt.figure(figsize=(6, 6))
-        plt.scatter(X[:, 0], X[:, 1], c=y, s=40, cmap='RdYlBu', alpha=0.8)
-        plt.xlim([-1,1])
-        plt.ylim([-1,1])
-        return X, y
