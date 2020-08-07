@@ -18,34 +18,39 @@ The books was written with the following specific versions of some popular libra
 - [seaborn](https://seaborn.pydata.org) version 0.9.0
 
 ## EgeaML
-The book provides a book-specific module, called **egeaML**. To install it into your local environment, use the command
-```
+The book provides a book-specific module, called **egeaML**. <br>
+To install it into your local environment, I recommend to create a virtualenv where you add the necessary requirements, running this command from your favourite terminal emulator:
+```bash
+pip install -r requirements.txt
 pip install git+https://github.com/andreagiussani/Applied_Machine_Learning_with_Python.git
 ```
-or using Anaconda:
+
+If, instead, you use the Anaconda system:
 ```
+conda install --file requirements.txt
 conda install git+https://github.com/andreagiussani/Applied_Machine_Learning_with_Python.git
 ```
-
-To install the necessary requirements, run this command from your favourite terminal emulator:
-```
-pip install -r requirements.txt
-```
-
-If you have Python3 already installed in your local environment:
-```
+If you have Python3 already installed in your local environment, you can run:
+```bash
 python3 -m pip install --upgrade pip
 python3 -m pip install git+https://github.com/andreagiussani/Applied_Machine_Learning_with_Python.git
 ```
 To use it inside your Python3 environment, you should initialise the class as follows:
-```
-import egeaML as eml
+```python
+import egeaML.egeaML as eml
 ```
 or alternatively
+```python
+from egeaML.egeaML import *
+from egeaML.egeaML import DataIngestion
 ```
-from egeaML import *
-from egeaML import DataIngestion
+
+If you wish to use the `egeaML` library on a Jupyter notebook, you firstly need to install the jupyter using
+```bash
+pip install jupyter
+python3 -m ipykernel install --user --name=<YOUR_ENV>
 ```
+and then you are ready to use all the feature of this helper.
 
 ## Submitting Errata
 If you have errata for the book, please submit them via the [BUP](https://bup.egeaonline.it) website. In case of possible mistakes within the book-specific module, you can submit a fixed-version as a pull-request in this repository.
