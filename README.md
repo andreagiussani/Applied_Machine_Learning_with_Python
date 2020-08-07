@@ -13,7 +13,7 @@ The books was written with the following specific versions of some popular libra
 - [numpy](https://numpy.org) version 1.16.4
 - [xgboost](https://xgboost.readthedocs.io/en/latest/#) version 0.82
 - [nltk](https://www.nltk.org) version 3.3
-- [gensim](https://radimrehurek.com/gensim/) version 3.1.8
+- [gensim](https://radimrehurek.com/gensim/) version 3.8.1
 - [matplotlib](https://matplotlib.org) version 3.1.0
 - [seaborn](https://seaborn.pydata.org) version 0.9.0
 
@@ -53,10 +53,10 @@ If you have errata for the book, please submit them via the [BUP](https://bup.eg
 ## How to Cite this Book
 
 ```tex
-@book{giussani2019,
+@book{giussani2020,
 	TITLE="Applied Machine Learning with Python",
 	AUTHOR="Andrea Giussani",
-	YEAR="2019",
+	YEAR="2020",
 	PUBLISHER="Bocconi University Press"
 }
 ```
