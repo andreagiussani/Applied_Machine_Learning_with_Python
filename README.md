@@ -19,7 +19,11 @@ The books was written with the following specific versions of some popular libra
 
 ## EgeaML
 The book provides a book-specific module, called **egeaML**. <br>
-To install it into your local environment, I recommend to create a virtualenv where you add the necessary requirements, running this command from your favourite terminal emulator:
+Please, clone on your local machine this repo, as follows:
+```bash
+git clone https://github.com/andreagiussani/Applied_Machine_Learning_with_Python.git
+```
+To install it into your local env, I recommend to create a virtualenv where you add the necessary requirements, running this command from your favourite terminal emulator:
 ```bash
 pip install -r requirements.txt
 pip install git+https://github.com/andreagiussani/Applied_Machine_Learning_with_Python.git
