@@ -1,4 +1,4 @@
-hr,holiday,workingday,temp,hum,windspeed,cnt,instant,mnth,yr,Clear to partly cloudy,Light Precipitation,Misty
+hr,holiday,workingday,temp,atemp,windspeed,cnt,instant,mnth,yr,Clear to partly cloudy,Light Precipitation,Misty
 0,0,0,0.76,0.66,0.0,149,13004,7,1,1,0,0
 1,0,0,0.74,0.7,0.1343,93,13005,7,1,1,0,0
 2,0,0,0.72,0.74,0.0896,90,13006,7,1,1,0,0

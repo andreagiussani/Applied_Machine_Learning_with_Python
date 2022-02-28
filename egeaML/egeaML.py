@@ -64,7 +64,7 @@ from nltk.corpus import stopwords
 #keras
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, BatchNormalization, Activation
-from keras.optimizers import Adam
+from tensorflow.keras.optimizers import Adam
 from keras.callbacks import EarlyStopping
 from keras.utils.np_utils import to_categorical
 import keras.backend as K
