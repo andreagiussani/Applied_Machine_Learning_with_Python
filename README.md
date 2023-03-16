@@ -1,5 +1,8 @@
 ## Helper functions for the book "Applied Machine Learning with Python"
 
+[![PyPi](https://img.shields.io/pypi/v/egeaML.svg)](https://pypi.python.org/pypi/egeaML)
+[![Downloads](https://static.pepy.tech/badge/egeaML)](https://pypi.python.org/pypi/egeaML)
+
 <p align="center">
   <img src="cover.jpg" width="428" height="584" title="FrontCover">
 </p>
@@ -21,11 +24,8 @@ Be sure you have created a virtualenv. Then run
 ```bash
 pip install egeaML
 ```
-To use it inside your Python3 environment, you should initialise the class as follows:
-```python
-import egeaML.egeaML as eml
-```
-or alternatively
+Once installed you can load a structured label dataset - such as the well-known Boston dataset - 
+as a `pandas.DataFrame`, as follows:
 ```python
 from egeaML.egeaML import DataIngestion
 raw_data = DataIngestion(
@@ -33,7 +33,6 @@ raw_data = DataIngestion(
     col_target='MEDV'
 )
 ```
-in case you want to load a specific dataset - in this case the well-known Boston dataset - as a `pandas.DataFrame`.
 
 ## How to develop on the EgeaML
 Please, clone on your local machine this repo, as follows:
@@ -56,6 +55,42 @@ If you have Python3 already installed in your local environment, you can run:
 python3 -m pip install --upgrade pip
 python3 -m pip install git+https://github.com/andreagiussani/Applied_Machine_Learning_with_Python.git
 ```
+
+### Unittest each method
+As a developer, you should unittest your contribution.
+To do so, you simply need to create a dedicated folder inside the `tests` subfolder (or possibly extend an existing one),
+and test that your method exactly does what you expect. Please look at the following example to tke inspiration:
+```python
+import unittest
+import os
+import pandas as pd
+
+from egeaML.egeaML import DataIngestion
+
+
+class DataIngestionTestCase(unittest.TestCase):
+
+    URL_STRING_NAME = 'https://raw.githubusercontent.com/andreagiussani/Applied_Machine_Learning_with_Python/master/data'
+    FILENAME_STRING_NAME = 'boston.csv'
+
+    def setUp(self):
+        self.col_target = 'MEDV'
+        self.filename = os.path.join(self.URL_STRING_NAME, self.FILENAME_STRING_NAME)
+        self.columns = [
+            'CRIM', 'ZN', 'INDUS', 'CHAS', 'NX', 'RM', 'AGE',
+            'DIS', 'RAD', 'TAX', 'PTRATIO', 'B', 'LSTAT', 'MEDV'
+        ]
+        self.raw_data = DataIngestion(df=self.filename, col_target=self.col_target)
+
+    def test__load_dataframe(self):
+        df = self.raw_data.load_data()
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertEqual(df.shape[0], 506)
+        self.assertEqual(df.shape[1], 14)
+        self.assertEqual(df.columns, self.columns)
+```
+The above unittest checks that the output is of type `pandas.DataFrame` and 
+verify the expected output satisfies some characteristics.
 
 ## Extra Stuff
 If you wish to use the `egeaML` library on a Jupyter notebook, you firstly need to install the jupyter library,
