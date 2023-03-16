@@ -24,4 +24,4 @@ class DataIngestionTestCase(unittest.TestCase):
         self.assertIsInstance(df, pd.DataFrame)
         self.assertEqual(df.shape[0], 506)
         self.assertEqual(df.shape[1], 14)
-        self.assertEqual(df.columns, self.columns)
+        self.assertListEqual(list(df), self.columns)
