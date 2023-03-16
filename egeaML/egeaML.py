@@ -137,33 +137,27 @@ class Preprocessing:
     It is made of two main objects: detecting nulls,
     and dealing with categorical_cols.
     """
-    def __init__(self,columns,X):
+    def __init__(self, columns, X):
         self.categorical_cols = columns
         self.X = X
         self.df = None
 
-    def spotting_null_values(self):
+    def simple_imputer(self):
         """
-        This function check the type of the column:
-        - if type object, then replace null with mode
-        - if type numeric, then replace null with median
+        This function replaces null values in the input DataFrame with mode for object columns
+        and median for numeric columns.
         """
-        summary_stats = {}
-        for c in self.X.columns.values:
-            if self.X[c].dtypes == 'O':
-                summary_stats[c] = self.X[c][self.X[c].notnull()].mode()
-            if self.X[c].dtypes in ['int64', 'float64']:
-                summary_stats[c] = self.X[c][self.X[c].notnull()].median()
-        for c in list(self.X):
-            self.X[c].fillna(summary_stats[c], inplace=True)
+        summary_stats = self.X.select_dtypes(include=['object']).mode().to_dict(orient='records')[0]
+        summary_stats.update(self.X.select_dtypes(exclude=['object']).median().to_dict())
+        self.X.fillna(value=summary_stats, inplace=True)
         return self.X
 
     def dummization(self):
         """
         This function performs dummization for categorical_cols
         """
-        self.df = pd.get_dummies(self.spotting_null_values(), prefix_sep='_', prefix=self.categorical_cols, columns=self.categorical_cols,
-                                    drop_first=False)
+        self.df = pd.get_dummies(self.simple_imputer(), prefix_sep='_', prefix=self.categorical_cols, columns=self.categorical_cols,
+                                 drop_first=False)
         return self.df
 
 
