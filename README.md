@@ -26,10 +26,12 @@ pip install egeaML
 ```
 Once installed you can load a structured label dataset - such as the well-known Boston dataset - 
 as a `pandas.DataFrame`, as follows:
+
 ```python
-from egeaML.dataingestion import DataIngestion
-raw_data = DataIngestion(
-    filename='https://raw.githubusercontent.com/andreagiussani/Applied_Machine_Learning_with_Python/master/data/boston.csv', 
+from egeaML.datareader import DataReader
+
+raw_data = DataReader(
+    filename='https://raw.githubusercontent.com/andreagiussani/Applied_Machine_Learning_with_Python/master/data/boston.csv',
     col_target='MEDV'
 )
 ```
@@ -63,16 +65,16 @@ python3 -m pip install git+https://github.com/andreagiussani/Applied_Machine_Lea
 As a developer, you should unittest your contribution.
 To do so, you simply need to create a dedicated folder inside the `tests` subfolder (or possibly extend an existing one),
 and test that your method exactly does what you expect. Please look at the following example to tke inspiration:
+
 ```python
 import unittest
 import os
 import pandas as pd
 
-from egeaML.dataingestion import DataIngestion
+from egeaML.datareader import DataReader
 
 
 class DataIngestionTestCase(unittest.TestCase):
-
     URL_STRING_NAME = 'https://raw.githubusercontent.com/andreagiussani/Applied_Machine_Learning_with_Python/master/data'
     FILENAME_STRING_NAME = 'boston.csv'
 
@@ -83,7 +85,7 @@ class DataIngestionTestCase(unittest.TestCase):
             'CRIM', 'ZN', 'INDUS', 'CHAS', 'NX', 'RM', 'AGE',
             'DIS', 'RAD', 'TAX', 'PTRATIO', 'B', 'LSTAT', 'MEDV'
         ]
-        self.raw_data = DataIngestion(filename=self.filename, col_target=self.col_target)
+        self.raw_data = DataReader(filename=self.filename, col_target=self.col_target)
 
     def test__load_dataframe(self):
         df = self.raw_data()

@@ -1,3 +1,4 @@
+import yfinance as yf
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
@@ -12,7 +13,7 @@ from egeaML.constants import (
 )
 
 
-class DataIngestion:
+class DataReader:
     """
     This class is used to ingest data into the system before preprocessing.
     """
@@ -36,15 +37,14 @@ class DataIngestion:
             split_features_target: bool
                 Default value is False, if True return set of features and target variable.
         """
-        self.df = pd.read_csv(self.filename, index_col=False)
-        self.df = self.df.loc[:, ~self.df.columns.str.match(UNNAMED_COLNAME)]
+        df = pd.read_csv(self.filename, index_col=False)
+        df = df.loc[:, ~df.columns.str.match(UNNAMED_COLNAME)]
         if split_features_target:
-            self.y = self.df[self.col_target]  # This returns a vector containing the target variable
-            self.X = self.df.drop(self.col_target, axis=1) if self.col_to_drop is None else self.df.drop(
-                    [self.col_to_drop, self.col_target], axis=1
-                    )
+            self.y = df[self.col_target]  # This returns a vector containing the target variable
+            self.X = df.drop(self.col_target, axis=1) if self.col_to_drop is None else \
+                df.drop([self.col_to_drop, self.col_target], axis=1)
             return self.X, self.y
-        return self.df
+        return df
 
     def split_train_test(self, test_size=0.3, random_seed=42):
         """
@@ -69,3 +69,23 @@ class DataIngestion:
             yticklabels=yticklabels
         )
         plt.title(title_plot)
+
+
+class FinancialDataReader:
+    #TODO: to be improved
+
+    def __init__(self, stock_name, start_date, end_date):
+        self.stock_name = stock_name
+        self.start_date = start_date
+        self.end_date = end_date
+        self._validation_input()
+
+    def _validation_input(self):
+        if type(self.stock_name) is not str:
+            raise ValueError('The stock name must be a string')
+        if self.start_date > self.end_date:
+            raise ValueError('The end date must be greater than the start date.')
+
+    def __call__(self):
+        df = yf.download(self.stock_name, start=self.start_date, end=self.end_date)
+        return df
