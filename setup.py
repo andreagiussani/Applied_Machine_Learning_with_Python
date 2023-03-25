@@ -15,7 +15,7 @@ setup(
         'shap==0.41.0', 'catboost==1.1.1',
         'gensim==4.3.1', 'nltk==3.8.1',
         'matplotlib==3.7.1', 'seaborn==0.9.0', 'wget==3.2',
-        'imbalanced-learn==0.5.0', 'tensorflow==2.11.0',
+        'imbalanced-learn==0.5.0', 'tensorflow==2.11.1',
         'xgboost==1.7.4',
     ],
     include_package_data=True,
