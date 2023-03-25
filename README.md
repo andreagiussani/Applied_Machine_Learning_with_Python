@@ -29,7 +29,7 @@ as a `pandas.DataFrame`, as follows:
 ```python
 from egeaML.dataingestion import DataIngestion
 raw_data = DataIngestion(
-    df='https://raw.githubusercontent.com/andreagiussani/Applied_Machine_Learning_with_Python/master/data/boston.csv', 
+    filename='https://raw.githubusercontent.com/andreagiussani/Applied_Machine_Learning_with_Python/master/data/boston.csv', 
     col_target='MEDV'
 )
 ```
@@ -83,7 +83,7 @@ class DataIngestionTestCase(unittest.TestCase):
             'CRIM', 'ZN', 'INDUS', 'CHAS', 'NX', 'RM', 'AGE',
             'DIS', 'RAD', 'TAX', 'PTRATIO', 'B', 'LSTAT', 'MEDV'
         ]
-        self.raw_data = DataIngestion(df=self.filename, col_target=self.col_target)
+        self.raw_data = DataIngestion(filename=self.filename, col_target=self.col_target)
 
     def test__load_dataframe(self):
         df = self.raw_data()
