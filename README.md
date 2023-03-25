@@ -27,12 +27,15 @@ pip install egeaML
 Once installed you can load a structured label dataset - such as the well-known Boston dataset - 
 as a `pandas.DataFrame`, as follows:
 ```python
-from egeaML.egeaML import DataIngestion
+from egeaML.dataingestion import DataIngestion
 raw_data = DataIngestion(
     df='https://raw.githubusercontent.com/andreagiussani/Applied_Machine_Learning_with_Python/master/data/boston.csv', 
     col_target='MEDV'
 )
 ```
+
+Please noe that the base code is evolving over time; in case you want to stick to the print version of the book, 
+be sure you install the `egeaML==0.2.3` version.
 
 ## How to develop on the EgeaML
 Please, clone on your local machine this repo, as follows:
@@ -65,7 +68,7 @@ import unittest
 import os
 import pandas as pd
 
-from egeaML.egeaML import DataIngestion
+from egeaML.dataingestion import DataIngestion
 
 
 class DataIngestionTestCase(unittest.TestCase):
