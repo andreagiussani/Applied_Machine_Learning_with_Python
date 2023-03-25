@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="egeaML",
-    version="1.0.1",
+    version="1.0.2",
     author="Andrea Giussani",
     author_email="andrea.giussani@unibocconi.it",
     description=("A python library used in support of the Book"

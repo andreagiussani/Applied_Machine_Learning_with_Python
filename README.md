@@ -83,7 +83,7 @@ class DataIngestionTestCase(unittest.TestCase):
         self.raw_data = DataIngestion(df=self.filename, col_target=self.col_target)
 
     def test__load_dataframe(self):
-        df = self.raw_data.load_data()
+        df = self.raw_data()
         self.assertIsInstance(df, pd.DataFrame)
         self.assertEqual(df.shape[0], 506)
         self.assertEqual(df.shape[1], 14)
