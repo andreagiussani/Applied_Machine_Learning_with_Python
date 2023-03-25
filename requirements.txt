@@ -2,6 +2,7 @@ catboost==1.1.1
 coverage==4.5.4
 gensim==4.3.1
 imbalanced-learn==0.5.0
+yfinance==0.2.9
 matplotlib==3.7.1
 nltk==3.8.1
 pandas==1.5.3
