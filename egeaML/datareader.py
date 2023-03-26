@@ -135,9 +135,7 @@ class CryptoDataReader:
     def _download_data(self, date, type):
 
         url = self._get_url(date, type=type)
-
         with requests.get(url) as response:
-
             if response.status_code == 404:
                 # TODO:
                 #       (1) check if it is a connection error or there's no such a file
