@@ -1,7 +1,18 @@
+import datetime
+
 import yfinance as yf
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
+
+import requests
+from io import BytesIO
+from zipfile import ZipFile
+
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+
+
 
 from sklearn.model_selection import train_test_split
 
@@ -13,10 +24,12 @@ from egeaML.constants import (
 )
 
 
+
 class DataReader:
     """
     This class is used to ingest data into the system before preprocessing.
     """
+
     def __init__(self, **args):
         """
         This module is used to ingest data into the system before preprocessing.
@@ -29,7 +42,7 @@ class DataReader:
 
     def __call__(self, split_features_target: bool = False):
         """
-        This function takes the .csv file, and clean from unwanted columns. 
+        This function takes the .csv file, and clean from unwanted columns.
         If split_features_target is set to True the function returns the set of features (explanatory variables)
         and the target variable
         Parameters
@@ -72,7 +85,7 @@ class DataReader:
 
 
 class FinancialDataReader:
-    #TODO: to be improved
+    # TODO: to be improved
 
     def __init__(self, stock_name, start_date, end_date):
         self.stock_name = stock_name
@@ -89,3 +102,89 @@ class FinancialDataReader:
     def __call__(self):
         df = yf.download(self.stock_name, start=self.start_date, end=self.end_date)
         return df
+
+
+class CryptoDataReader:
+
+    def __init__(self, crypto_name, start_date, end_date, timeframe):
+        self.crypto_name = crypto_name
+        self.start_date = start_date
+        self.end_date = end_date
+        self.timeframe = timeframe
+        self._validation_input()
+
+    def _validation_input(self):
+        # TODO:
+        #       (1) check if symbol is in binance list
+        #       (2) check if timeframe is valid
+        #       (3) check if date are datetime object or valid string
+        pass
+
+    def _get_url(self, date, type):
+        """ Create the url from where download data """
+        year, month, day = date.year, date.strftime('%m'), date.strftime('%d')
+
+        if type == 'monthly':
+            URL = "https://data.binance.vision/data/spot/monthly/klines/"
+            return URL + f"{self.crypto_name}/{self.timeframe}/{self.crypto_name}-{self.timeframe}-{year}-{month}.zip"
+
+        elif type == 'daily':
+            URL = "https://data.binance.vision/data/spot/daily/klines/"
+            return URL + f"{self.crypto_name}/{self.timeframe}/{self.crypto_name}-{self.timeframe}-{year}-{month}-{day}.zip"
+
+    def _download_data(self, date, type):
+
+        url = self._get_url(date, type=type)
+
+        with requests.get(url) as response:
+
+            if response.status_code == 404:
+                # TODO:
+                #       (1) check if it is a connection error or there's no such a file
+                pass
+
+            else:
+                zipfile = ZipFile(BytesIO(response.content))
+                with zipfile.open(zipfile.namelist()[0]) as file_in:
+                    download = pd.read_csv(file_in, header=None)
+                return download
+
+    @staticmethod
+    def last_day_of_month(date):
+        if date.month == 12:
+            return 31
+        else:
+            return (date.replace(month=date.month+1, day=1) - datetime.timedelta(days=1)).day
+
+    def get_data(self):
+
+        adjusted_end_date = datetime.date(self.end_date.year,
+                                          self.end_date.month,
+                                          self.last_day_of_month(self.end_date))
+
+        data = pd.DataFrame()
+
+        with ThreadPoolExecutor(max_workers=10) as exe:
+            futures = [exe.submit(self._download_data, date, 'monthly')
+                       for date in pd.date_range(self.start_date, adjusted_end_date, freq='M')]
+
+            for future in as_completed(futures):
+                output = future.result()
+                if isinstance(output, pd.DataFrame):
+                    data = pd.concat([data, output])
+
+        data.drop(columns=[6, 7, 9, 10, 11], inplace=True)
+        data.columns = ['Time', 'Open', 'High', 'Low', 'Close', 'Volume', 'Trades']
+        data.Time = pd.to_datetime(data.Time, unit='ms')
+        data.set_index(keys='Time', inplace=True)
+        data.sort_index(inplace=True)
+        data = data.loc[self.start_date:self.end_date]
+
+        return data
+
+
+if __name__ == '__main__':
+    sd = datetime.date(2022, 1, 1)
+    ed = datetime.date(2022, 12, 31)
+    crypto = CryptoDataReader('BTCUSDT', sd, ed, '1d')
+    d = crypto.get_data()
