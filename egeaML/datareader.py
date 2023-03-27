@@ -186,7 +186,7 @@ class CryptoDataReader:
         data = data.loc[self.start_date:self.end_date]
 
         if data.index.min().date() != self.start_date or data.index.max().date() != self.end_date:
-            warnings.warn(f'Donwload Warning: Data for {self.crypto_name} is only available '
+            warnings.warn(f'Download Warning: Data for {self.crypto_name} is only available '
                           f'from {data.index.min().date()} to {data.index.max().date()}')
 
         return data
