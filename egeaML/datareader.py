@@ -12,8 +12,6 @@ from zipfile import ZipFile
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
-
-
 from sklearn.model_selection import train_test_split
 
 from egeaML.constants import (
@@ -23,6 +21,15 @@ from egeaML.constants import (
     COL_TO_DROP_CONSTANT,
 )
 
+import warnings
+
+
+def custom_formatwarning(msg, *args, **kwargs):
+    # ignore everything except the message
+    return str(msg) + '\n'
+
+
+warnings.formatwarning = custom_formatwarning
 
 
 class DataReader:
@@ -152,7 +159,7 @@ class CryptoDataReader:
         if date.month == 12:
             return 31
         else:
-            return (date.replace(month=date.month+1, day=1) - datetime.timedelta(days=1)).day
+            return (date.replace(month=date.month + 1, day=1) - datetime.timedelta(days=1)).day
 
     def get_data(self):
 
@@ -177,6 +184,10 @@ class CryptoDataReader:
         data.set_index(keys='Time', inplace=True)
         data.sort_index(inplace=True)
         data = data.loc[self.start_date:self.end_date]
+
+        if data.index.min().date() != self.start_date or data.index.max().date() != self.end_date:
+            warnings.warn(f'Donwload Warning: Data for {self.crypto_name} is only available '
+                          f'from {data.index.min().date()} to {data.index.max().date()}')
 
         return data
 
