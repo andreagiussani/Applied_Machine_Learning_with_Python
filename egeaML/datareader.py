@@ -11,7 +11,6 @@ from zipfile import ZipFile
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-
 from sklearn.model_selection import train_test_split
 
 from egeaML.constants import (
@@ -112,6 +111,13 @@ class FinancialDataReader:
 
 
 class CryptoDataReader:
+    """
+    example:
+    sd = datetime.date(2022, 1, 1)
+    ed = datetime.date(2022, 12, 31)
+    crypto = CryptoDataReader('BTCUSDT', sd, ed, '1d')
+    data = crypto.get_data()
+    """
 
     def __init__(self, crypto_name, start_date, end_date, timeframe):
         self.crypto_name = crypto_name
@@ -190,10 +196,3 @@ class CryptoDataReader:
                           f'from {data.index.min().date()} to {data.index.max().date()}')
 
         return data
-
-
-if __name__ == '__main__':
-    sd = datetime.date(2022, 1, 1)
-    ed = datetime.date(2022, 12, 31)
-    crypto = CryptoDataReader('BTCUSDT', sd, ed, '1d')
-    d = crypto.get_data()
