@@ -35,7 +35,6 @@ class DataReader:
     """
     This class is used to ingest data into the system before preprocessing.
     """
-
     def __init__(self, **args):
         """
         This module is used to ingest data into the system before preprocessing.
@@ -91,7 +90,7 @@ class DataReader:
 
 
 class FinancialDataReader:
-    # TODO: to be improved
+    #TODO: to be improved
 
     def __init__(self, stock_name, start_date, end_date):
         self.stock_name = stock_name
