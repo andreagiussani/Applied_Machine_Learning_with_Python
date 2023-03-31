@@ -24,7 +24,6 @@ import warnings
 
 
 def custom_formatwarning(msg, *args, **kwargs):
-    # ignore everything except the message
     return str(msg) + '\n'
 
 
@@ -126,9 +125,11 @@ class CryptoDataReader:
         self._validation_input()
 
     def _validation_input(self):
-        # TODO:
+        valid_timeframe = ['1s', '1m', '3m', '5m', '15m', '30m', '1h', '2h', '4h', '6h', '8h', '12h', '1d']
+        if self.timeframe not in valid_timeframe:
+            raise f'Timeframe := {self.timeframe} must be in ({", ".join(valid_timeframe)})'
+        #TODO:
         #       (1) check if symbol is in binance list
-        #       (2) check if timeframe is valid
         #       (3) check if date are datetime object or valid string
         pass
 
@@ -183,12 +184,22 @@ class CryptoDataReader:
                 if isinstance(output, pd.DataFrame):
                     data = pd.concat([data, output])
 
+            if adjusted_end_date >= datetime.date.today():
+                futures = [exe.submit(self._download_data, date, 'daily')
+                           for date in pd.date_range(self.end_date.replace(day=1), self.end_date)]
+
+                for future in as_completed(futures):
+                    output = future.result()
+                    if isinstance(output, pd.DataFrame):
+                        data = pd.concat([data, output])
+
         data.drop(columns=[6, 7, 9, 10, 11], inplace=True)
         data.columns = ['Time', 'Open', 'High', 'Low', 'Close', 'Volume', 'Trades']
+        data.drop_duplicates(subset=['Time'], inplace=True)
         data.Time = pd.to_datetime(data.Time, unit='ms')
         data.set_index(keys='Time', inplace=True)
         data.sort_index(inplace=True)
-        data = data.loc[self.start_date:self.end_date]
+        data = data.loc[self.start_date:datetime.datetime.combine(self.end_date, datetime.time(23, 59, 59))]
 
         if data.index.min().date() != self.start_date or data.index.max().date() != self.end_date:
             warnings.warn(f'Download Warning: Data for {self.crypto_name} is only available '
