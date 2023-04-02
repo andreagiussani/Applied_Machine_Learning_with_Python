@@ -34,6 +34,7 @@ class DataReader:
     """
     This class is used to ingest data into the system before preprocessing.
     """
+
     def __init__(self, **args):
         """
         This module is used to ingest data into the system before preprocessing.
@@ -89,7 +90,7 @@ class DataReader:
 
 
 class FinancialDataReader:
-    #TODO: to be improved
+    # TODO: to be improved
 
     def __init__(self, stock_name, start_date, end_date):
         self.stock_name = stock_name
@@ -110,11 +111,13 @@ class FinancialDataReader:
 
 class CryptoDataReader:
     """
-    example:
-    sd = datetime.date(2022, 1, 1)
-    ed = datetime.date(2022, 12, 31)
-    crypto = CryptoDataReader('BTCUSDT', sd, ed, '1d')
+
+    start_date = datetime.date(2022, 1, 1)
+    end_date = datetime.date(2022, 12, 31)
+
+    crypto = CryptoDataReader('BTCUSDT', start_date, end_date, '1d')
     data = crypto.get_data()
+
     """
 
     def __init__(self, crypto_name, start_date, end_date, timeframe):
@@ -125,13 +128,20 @@ class CryptoDataReader:
         self._validation_input()
 
     def _validation_input(self):
+
         valid_timeframe = ['1s', '1m', '3m', '5m', '15m', '30m', '1h', '2h', '4h', '6h', '8h', '12h', '1d']
         if self.timeframe not in valid_timeframe:
-            raise f'Timeframe := {self.timeframe} must be in ({", ".join(valid_timeframe)})'
-        #TODO:
+            raise ValueError(f'Timeframe := {self.timeframe} must be in ({", ".join(valid_timeframe)})')
+
+        if isinstance(self.start_date, str) and isinstance(self.end_date, str):
+            self.start_date = datetime.datetime.strptime(self.start_date, '%Y/%m/%d').date()
+            self.end_date = datetime.datetime.strptime(self.end_date, '%Y/%m/%d').date()
+
+        if isinstance(self.start_date, datetime.date) and isinstance(self.end_date, datetime.date) and self.start_date > self.end_date:
+            raise ValueError(f'The end date must be greater than the start date.')
+
+        # TODO:
         #       (1) check if symbol is in binance list
-        #       (3) check if date are datetime object or valid string
-        pass
 
     def _get_url(self, date, type):
         """ Create the url from where download data """
