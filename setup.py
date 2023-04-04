@@ -16,7 +16,7 @@ setup(
         'gensim==4.3.1', 'nltk==3.8.1',
         'matplotlib==3.7.1', 'seaborn==0.9.0', 'wget==3.2',
         'imbalanced-learn==0.5.0', 'tensorflow==2.11.0',
-        'xgboost==1.7.4',
+        'xgboost==1.7.4', 'yfinance==0.2.9'
     ],
     include_package_data=True,
 )

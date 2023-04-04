@@ -1,75 +1,39 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
-from datetime import datetime
 import re
-import string
 import os
-import json
 import wget
-import csv
 import pandas as pd
 import numpy as np
 import xgboost as xgb
 
 import matplotlib.pyplot as plt
 import seaborn as sns
-from scipy.integrate import quad
-from matplotlib.patches import Polygon
-from matplotlib.patches import ConnectionPatch
 from matplotlib.colors import ListedColormap
 plt.style.use('ggplot')
 
 #sklearn
-from sklearn.linear_model import LogisticRegression, LinearRegression, HuberRegressor, RANSACRegressor, Ridge, Lasso, ElasticNet
-from sklearn.svm import SVC, LinearSVC
+from sklearn.linear_model import LogisticRegression
+from sklearn.svm import SVC
 from sklearn.decomposition import PCA
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import VotingClassifier, BaggingClassifier,RandomForestClassifier
 from sklearn.model_selection import GridSearchCV, train_test_split,cross_val_score
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import confusion_matrix, accuracy_score, classification_report, precision_recall_curve
-from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
-from sklearn.datasets import make_classification, make_moons, make_circles, make_blobs
-from sklearn.utils import shuffle
-from sklearn.preprocessing import StandardScaler, LabelEncoder, OneHotEncoder, MinMaxScaler
-from sklearn.model_selection import StratifiedKFold, KFold
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.pipeline import make_pipeline, Pipeline
 
-import nltk
 import gensim
 
 #gensim
-from gensim.parsing.preprocessing import strip_non_alphanum
 from gensim.parsing.preprocessing import strip_punctuation
 from gensim.parsing.preprocessing import remove_stopwords
 from gensim.parsing.preprocessing import strip_multiple_whitespaces
-from gensim.parsing.preprocessing import STOPWORDS
-from gensim.utils import simple_preprocess
-from gensim.corpora.dictionary import Dictionary
-from gensim import models, utils, matutils
-from gensim.parsing.preprocessing import STOPWORDS
+from gensim import models
 from gensim.models.doc2vec import TaggedDocument
 
 #nltk
-from nltk.tokenize import sent_tokenize
 from nltk.tokenize import word_tokenize
-from nltk.tokenize import TweetTokenizer
-from nltk.tokenize import regexp_tokenize
 from nltk.stem.wordnet import WordNetLemmatizer
-from nltk.stem.porter import PorterStemmer
 from nltk.stem.snowball import SnowballStemmer
-from nltk.corpus import stopwords
-
-#keras
-from keras.models import Sequential
-from keras.layers import Dense, Dropout, BatchNormalization, Activation
-from tensorflow.keras.optimizers import Adam
-from keras.callbacks import EarlyStopping
-from keras.utils.np_utils import to_categorical
-import keras.backend as K
-from keras.wrappers.scikit_learn import KerasClassifier
-
 
 
 class model_fitting:
