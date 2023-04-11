@@ -1,4 +1,5 @@
 import datetime
+from calendar import monthrange
 
 import yfinance as yf
 import matplotlib.pyplot as plt
@@ -20,14 +21,8 @@ from egeaML.constants import (
     COL_TO_DROP_CONSTANT,
 )
 
-import warnings
-
-
-def custom_formatwarning(msg, *args, **kwargs):
-    return str(msg) + '\n'
-
-
-warnings.formatwarning = custom_formatwarning
+import logging
+logging.basicConfig(level=logging.INFO)
 
 
 class DataReader:
@@ -111,6 +106,20 @@ class FinancialDataReader:
 
 class CryptoDataReader:
     """
+    Parameters
+    ----------
+    crypto_name : string
+        Cryptocurrency to download
+    start_date: datetime, str
+        Download start date string (YYYY-MM-DD) or _datetime.
+    end_date: datetime, str
+        Download end date string (YYYY-MM-DD) or _datetime.
+    timeframe : str
+        Valid timeframes: 1s,1m,3m,5m,15m,30m,1h,2h,4h,6h,8h,12h,1d
+
+    Examples
+    --------
+    Using datetime objects:
 
     start_date = datetime.date(2022, 1, 1)
     end_date = datetime.date(2022, 12, 31)
@@ -118,10 +127,17 @@ class CryptoDataReader:
     crypto = CryptoDataReader('BTCUSDT', start_date, end_date, '1d')
     data = crypto.get_data()
 
+    Using date as string:
+
+    start_date = '2022-06-30'
+    end_date = '2023-03-31'
+
+    crypto = CryptoDataReader('ADAUSDT', start_date, end_date, '1h')
+    data = crypto.get_data()
     """
 
     def __init__(self, crypto_name, start_date, end_date, timeframe):
-        self.crypto_name = crypto_name
+        self.crypto_name = crypto_name.upper()
         self.start_date = start_date
         self.end_date = end_date
         self.timeframe = timeframe
@@ -134,77 +150,74 @@ class CryptoDataReader:
             raise ValueError(f'Timeframe := {self.timeframe} must be in ({", ".join(valid_timeframe)})')
 
         if isinstance(self.start_date, str) and isinstance(self.end_date, str):
-            self.start_date = datetime.datetime.strptime(self.start_date, '%Y/%m/%d').date()
-            self.end_date = datetime.datetime.strptime(self.end_date, '%Y/%m/%d').date()
+            self.start_date = datetime.datetime.strptime(self.start_date, '%Y-%m-%d').date()
+            self.end_date = datetime.datetime.strptime(self.end_date, '%Y-%m-%d').date()
 
-        if isinstance(self.start_date, datetime.date) and isinstance(self.end_date, datetime.date) and self.start_date > self.end_date:
+        if self.start_date > self.end_date:
             raise ValueError(f'The end date must be greater than the start date.')
 
-        # TODO:
-        #       (1) check if symbol is in binance list
+    @staticmethod
+    def _check_connection() -> bool:
+        with requests.head('http://www.google.com') as response:
+            if response.status_code == 404:
+                return False
+            else:
+                return True
 
-    def _get_url(self, date, type):
+    def _get_url(self, date, type) -> str:
         """ Create the url from where download data """
         year, month, day = date.year, date.strftime('%m'), date.strftime('%d')
 
-        if type == 'monthly':
-            URL = "https://data.binance.vision/data/spot/monthly/klines/"
-            return URL + f"{self.crypto_name}/{self.timeframe}/{self.crypto_name}-{self.timeframe}-{year}-{month}.zip"
+        URL = f"https://data.binance.vision/data/spot/" \
+              f"{type}/klines/{self.crypto_name}/{self.timeframe}/{self.crypto_name}-{self.timeframe}-{year}-{month}"
+        return URL + ".zip" if type == 'monthly' else URL + f"-{day}.zip"
 
-        elif type == 'daily':
-            URL = "https://data.binance.vision/data/spot/daily/klines/"
-            return URL + f"{self.crypto_name}/{self.timeframe}/{self.crypto_name}-{self.timeframe}-{year}-{month}-{day}.zip"
-
-    def _download_data(self, date, type):
+    def _download_data(self, date, type) -> Union(pd.DataFrame, bool):
 
         url = self._get_url(date, type=type)
         with requests.get(url) as response:
+
             if response.status_code == 404:
-                # TODO:
-                #       (1) check if it is a connection error or there's no such a file
-                pass
+                return False
 
             else:
                 zipfile = ZipFile(BytesIO(response.content))
                 with zipfile.open(zipfile.namelist()[0]) as file_in:
-                    download = pd.read_csv(file_in, header=None)
+                    download = pd.read_csv(file_in,
+                                           usecols=[0, 1, 2, 3, 4, 5, 8, 9],
+                                           header=None,
+                                           names=['Time', 'Open', 'High', 'Low', 'Close', 'Volume', 'Trades', 'Buy_volume'])
                 return download
 
     @staticmethod
-    def last_day_of_month(date):
-        if date.month == 12:
-            return 31
-        else:
-            return (date.replace(month=date.month + 1, day=1) - datetime.timedelta(days=1)).day
+    def last_day_of_month(date) -> datetime:
+        return date.replace(day=monthrange(date.year, date.month)[1])
 
-    def get_data(self):
+    def _get_dates_to_download(self) -> list:
+        adjusted_end_date = self.last_day_of_month(self.end_date)
+        dates_monthly = [(date, 'monthly') for date in pd.date_range(self.start_date, adjusted_end_date, freq='M')]
+        dates_daily = [(date, 'daily') for date in pd.date_range(datetime.date.today().replace(day=1), datetime.date.today(), freq='D')
+                       if adjusted_end_date >= datetime.date.today()]
 
-        adjusted_end_date = datetime.date(self.end_date.year,
-                                          self.end_date.month,
-                                          self.last_day_of_month(self.end_date))
+        return dates_monthly + dates_daily
 
-        data = pd.DataFrame()
+    def get_data(self) -> pd.DataFrame:
+
+        if not self._check_connection():
+            raise OSError('No connection available')
+
+        data = pd.DataFrame(columns=['Time', 'Open', 'High', 'Low', 'Close', 'Volume', 'Trades', 'Buy_volume'])
 
         with ThreadPoolExecutor(max_workers=10) as exe:
-            futures = [exe.submit(self._download_data, date, 'monthly')
-                       for date in pd.date_range(self.start_date, adjusted_end_date, freq='M')]
+
+            dates_to_download = self._get_dates_to_download()
+            futures = [exe.submit(self._download_data, date, type) for date, type in dates_to_download]
 
             for future in as_completed(futures):
                 output = future.result()
                 if isinstance(output, pd.DataFrame):
-                    data = pd.concat([data, output])
+                    data = pd.concat([data, output], axis=0, join='inner')
 
-            if adjusted_end_date >= datetime.date.today():
-                futures = [exe.submit(self._download_data, date, 'daily')
-                           for date in pd.date_range(self.end_date.replace(day=1), self.end_date)]
-
-                for future in as_completed(futures):
-                    output = future.result()
-                    if isinstance(output, pd.DataFrame):
-                        data = pd.concat([data, output])
-
-        data.drop(columns=[6, 7, 9, 10, 11], inplace=True)
-        data.columns = ['Time', 'Open', 'High', 'Low', 'Close', 'Volume', 'Trades']
         data.drop_duplicates(subset=['Time'], inplace=True)
         data.Time = pd.to_datetime(data.Time, unit='ms')
         data.set_index(keys='Time', inplace=True)
@@ -212,7 +225,7 @@ class CryptoDataReader:
         data = data.loc[self.start_date:datetime.datetime.combine(self.end_date, datetime.time(23, 59, 59))]
 
         if data.index.min().date() != self.start_date or data.index.max().date() != self.end_date:
-            warnings.warn(f'Download Warning: Data for {self.crypto_name} is only available '
-                          f'from {data.index.min().date()} to {data.index.max().date()}')
+            logging.info(f'Data for {self.crypto_name} is only available '
+                         f'from {data.index.min().date()} to {data.index.max().date()}')
 
         return data
