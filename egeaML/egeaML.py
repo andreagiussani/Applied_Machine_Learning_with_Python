@@ -6,39 +6,38 @@ import wget
 import pandas as pd
 import numpy as np
 import xgboost as xgb
+import gensim
 
 import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib.colors import ListedColormap
 plt.style.use('ggplot')
 
-#sklearn
+
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
 from sklearn.decomposition import PCA
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.model_selection import GridSearchCV, train_test_split,cross_val_score
+from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.metrics import confusion_matrix, accuracy_score, classification_report, precision_recall_curve
+from sklearn.metrics import confusion_matrix, accuracy_score, precision_recall_curve
 
-import gensim
 
-#gensim
 from gensim.parsing.preprocessing import strip_punctuation
 from gensim.parsing.preprocessing import remove_stopwords
 from gensim.parsing.preprocessing import strip_multiple_whitespaces
 from gensim import models
 from gensim.models.doc2vec import TaggedDocument
 
-#nltk
+
 from nltk.tokenize import word_tokenize
 from nltk.stem.wordnet import WordNetLemmatizer
 from nltk.stem.snowball import SnowballStemmer
 
 
-class model_fitting:
+class ModelFitting:
 
-    def __init__(self,n):
+    def __init__(self, n):
         self.n = n
 
         self.lr = LogisticRegression()
@@ -58,8 +57,8 @@ class model_fitting:
         return self.my_dict
 
     def get_models(self,**kwargs):
-        my_dict = kwargs['models_dict']#self.models_def()
-        my_list = [kwargs['model_one'],kwargs['model_two'],
+        my_dict = kwargs['models_dict']
+        my_list = [kwargs['model_one'], kwargs['model_two'],
                    kwargs['model_three']]
         for name,abb in my_dict.items():
             self.abb_list.append(abb)
@@ -79,7 +78,7 @@ class model_fitting:
             print("{} : {}".format(name,score))
 
 
-class utils():
+class DataUtils:
 
     def __init__(self):
         pass
@@ -130,7 +129,7 @@ class utils():
         print("\nDownload Finished")
 
 
-class functions_utils:
+class LossUtils:
 
     def __init__(self, data):
         self.data = data
@@ -145,7 +144,7 @@ class functions_utils:
         return np.maximum(1 - self.data, 0)
 
 
-class plots:
+class PlottingUtils:
 
     def plot_pca(X):
 
@@ -194,6 +193,7 @@ class plots:
 
 class classification_plots:
 
+    @staticmethod
     def training_class(X,y,test_size=0.3):
         """
         This Function plots a a 2-dim training set,
@@ -217,6 +217,7 @@ class classification_plots:
         plt.legend(["Training Class Female", "Training Class Man"],fontsize=10)
         plt.show()
 
+    @staticmethod
     def knn_class(X,y,test_size=0.3):
         """
         This Function fits and a k-Neigh classifier and provides the
@@ -246,6 +247,7 @@ class classification_plots:
                    ,fontsize=10)
         plt.show()
 
+    @staticmethod
     def plotting_prediction(X_train,X_test,y_train,y_test,nn):
         """
         This function plots the test set points labelled with the predicted value.
@@ -268,6 +270,7 @@ class classification_plots:
         plt.tight_layout()
 
 
+    @staticmethod
     def confusion_matrix(y_test, y_pred, cmap=None, xticklabels=None, yticklabels=None):
         """
         This function generates a confusion matrix, which is used as a
@@ -302,6 +305,7 @@ class classification_plots:
             plt.ylabel('Predicted label')
             plt.show()
 
+    @staticmethod
     def plot_precision_recall(y_test, y_pred):
         """
         Precision/Recall Curve
@@ -319,6 +323,7 @@ class classification_plots:
         plt.ylim=([0.0, 1.05])
         plt.show()
 
+    @staticmethod
     def knn_boundaries(X_train,X_test,y_train,y_test,n_neighbors):
         """
         This Function provides the boundaries for a k-Neigh classifier
@@ -352,10 +357,11 @@ class classification_plots:
                       % (n_neighbors))
         plt.show()
 
-    def scaling_plot():
-        import mglearn
-        mglearn.plots.plot_scaling()
+    # def scaling_plot():
+    #     import mglearn
+    #     mglearn.plots.plot_scaling()
 
+    @staticmethod
     def plot_hist(data,features_name,target_name):
         data = pd.DataFrame(data, columns=features_name)
         plt.figure(figsize=(20, 16))
@@ -368,6 +374,7 @@ class classification_plots:
             plt.xlabel(col)
             plt.ylabel(target_name)
 
+    @staticmethod
     def plot_svc_decision_function(model, ax=None, plot_support=True):
         """Plot the decision function for a 2D SVC"""
         if ax is None:
@@ -395,6 +402,7 @@ class classification_plots:
         ax.set_xlim(xlim)
         ax.set_ylim(ylim)
 
+    @staticmethod
     def plot_svc_regularization_effect(X,y,kernel,cmap):
         fig, ax = plt.subplots(1, 2, figsize=(16, 6))
         fig.subplots_adjust(left=0.0625, right=0.95, wspace=0.1)
@@ -408,7 +416,7 @@ class classification_plots:
         plt.show()
 
 
-class xgboost:
+class EgeaMLXGBoost:
     def fitting(X,y,param_grid,n_jobs,cv):
         clf_xgb = xgb.XGBClassifier(n_jobs=n_jobs, objective="binary:logistic")
         clf = GridSearchCV(clf_xgb, param_grid=param_grid, verbose=1, cv=cv)
@@ -439,9 +447,7 @@ class xgboost:
         plt.savefig('n_estimators_vs_learning_rate.png')
 
 
-class nlp:
-    def __init__(self):
-        pass
+class EgeaNLP:
 
     @staticmethod
     def clean_text(text):
@@ -529,9 +535,12 @@ class nlp:
         return mylist
 
 
-class neural_network:
+class EgeaNN:
 
-    def plot_data(X, y):
+    def __init__(self):
+        pass
+
+    def plot_data(self, X, y):
         """
         This function plots the raw data
         """
@@ -542,9 +551,7 @@ class neural_network:
         plt.ylim((min(X[:, 1])-0.1, max(X[:, 1])+0.1))
         plt.legend()
 
-
-    def make_multiclass(n=500, d=2, k=3):
-
+    def make_multiclass(self, n=500, d=2, k=3):
         """
         parameters:
             n: # points per class
@@ -567,7 +574,7 @@ class neural_network:
         plt.ylim([-1,1])
         return X, y
 
-    def plot_decision_boundary(func, X, y):
+    def plot_decision_boundary(self, func, X, y):
         figsize=(6, 6)
         amin, bmin = X.min(axis=0) - 0.1
         amax, bmax = X.max(axis=0) + 0.1
@@ -593,7 +600,7 @@ class neural_network:
         plt.xlim(amin, amax)
         plt.ylim(bmin, bmax)
 
-    def plot_loss_accuracy(history):
+    def plot_loss_accuracy(self, history):
         historydf = pd.DataFrame(history.history, index=history.epoch)
         plt.figure(figsize=(10, 6))
         historydf.plot(ylim=(0, max(1, historydf.values.max())),
@@ -602,7 +609,7 @@ class neural_network:
         acc = history.history['acc'][-1]
         plt.title('Loss: %.3f, Accuracy: %.3f' % (loss, acc))
 
-    def plot_multiclass_decision_boundary(model, X, y):
+    def plot_multiclass_decision_boundary(self, model, X, y):
         x_min, x_max = X[:, 0].min() - 0.1, X[:, 0].max() + 0.1
         y_min, y_max = X[:, 1].min() - 0.1, X[:, 1].max() + 0.1
         xx, yy = np.meshgrid(np.linspace(x_min, x_max, 101),
