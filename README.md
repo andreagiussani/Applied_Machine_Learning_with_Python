@@ -2,6 +2,7 @@
 
 [![PyPi](https://img.shields.io/pypi/v/egeaML.svg)](https://pypi.python.org/pypi/egeaML)
 [![Downloads](https://static.pepy.tech/badge/egeaML)](https://pypi.python.org/pypi/egeaML)
+[![CI status](https://github.com/andreagiussani/Applied_Machine_Learning_with_Python/workflows/CI/badge.svg)](https://github.com/andreagiussani/Applied_Machine_Learning_with_Python/actions?queryworkflow%3ACI+event%3Apush+branch%3Amain)
 
 <p align="center">
   <img src="cover.jpg" width="428" height="584" title="FrontCover">
@@ -31,7 +32,7 @@ as a `pandas.DataFrame`, as follows:
 from egeaML.datareader import DataReader
 
 raw_data = DataReader(
-    filename='https://raw.githubusercontent.com/andreagiussani/Applied_Machine_Learning_with_Python/master/data/boston.csv',
+    filename='https://raw.githubusercontent.com/andreagiussani/datasets/master/egeaML/boston.csv',
     col_target='MEDV'
 )
 ```
@@ -75,7 +76,7 @@ from egeaML.datareader import DataReader
 
 
 class DataIngestionTestCase(unittest.TestCase):
-    URL_STRING_NAME = 'https://raw.githubusercontent.com/andreagiussani/Applied_Machine_Learning_with_Python/master/data'
+    URL_STRING_NAME = 'https://raw.githubusercontent.com/andreagiussani/datasets/master/egeaML'
     FILENAME_STRING_NAME = 'boston.csv'
 
     def setUp(self):
