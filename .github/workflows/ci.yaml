@@ -1,4 +1,4 @@
-name: Run Unit Test via Pytest
+name: CI
 
 on: [push]
 
