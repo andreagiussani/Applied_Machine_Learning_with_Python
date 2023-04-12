@@ -22,6 +22,7 @@ from egeaML.constants import (
 )
 
 import logging
+
 logging.basicConfig(level=logging.INFO)
 
 
@@ -155,6 +156,11 @@ class CryptoDataReader:
 
         if self.start_date > self.end_date:
             raise ValueError(f'The end date must be greater than the start date.')
+
+        tickers = pd.read_csv('https://raw.githubusercontent.com/binance/binance-public-data/master/data/symbols.txt', header=None)
+        if not self.crypto_name in tickers.values:
+            raise ValueError(f'{self.crypto_name} is not a valid ticker. '
+                             f'Check the available tickers at https://github.com/binance/binance-public-data/blob/master/data/symbols.txt')
 
     @staticmethod
     def _check_connection() -> bool:
