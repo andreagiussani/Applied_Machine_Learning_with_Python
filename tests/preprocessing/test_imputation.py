@@ -2,7 +2,7 @@ import unittest
 import pandas as pd
 import numpy as np
 
-from egeaML.egeaML import Preprocessing
+from egeaML.preprocessing import Preprocessing
 
 
 class DataIngestionTestCase(unittest.TestCase):
