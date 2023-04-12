@@ -1,5 +1,6 @@
 import datetime
 from calendar import monthrange
+from typing import Union
 
 import yfinance as yf
 import matplotlib.pyplot as plt
@@ -22,7 +23,6 @@ from egeaML.constants import (
 )
 
 import logging
-
 logging.basicConfig(level=logging.INFO)
 
 
@@ -157,10 +157,10 @@ class CryptoDataReader:
         if self.start_date > self.end_date:
             raise ValueError(f'The end date must be greater than the start date.')
 
-        tickers = pd.read_csv('https://raw.githubusercontent.com/binance/binance-public-data/master/data/symbols.txt', header=None)
-        if not self.crypto_name in tickers.values:
-            raise ValueError(f'{self.crypto_name} is not a valid ticker. '
-                             f'Check the available tickers at https://github.com/binance/binance-public-data/blob/master/data/symbols.txt')
+        filepath = 'https://raw.githubusercontent.com/binance/binance-public-data/master/data/symbols.txt'
+        tickers = pd.read_csv(filepath, header=None)
+        if self.crypto_name not in tickers.values:
+            raise ValueError(f'{self.crypto_name} is not a valid ticker. Check the available tickers at {filepath}.')
 
     @staticmethod
     def _check_connection() -> bool:
@@ -170,7 +170,7 @@ class CryptoDataReader:
             else:
                 return True
 
-    def _get_url(self, date, type) -> str:
+    def _get_url(self, date: datetime, type: str) -> str:
         """ Create the url from where download data """
         year, month, day = date.year, date.strftime('%m'), date.strftime('%d')
 
@@ -178,7 +178,7 @@ class CryptoDataReader:
               f"{type}/klines/{self.crypto_name}/{self.timeframe}/{self.crypto_name}-{self.timeframe}-{year}-{month}"
         return URL + ".zip" if type == 'monthly' else URL + f"-{day}.zip"
 
-    def _download_data(self, date, type) -> Union(pd.DataFrame, bool):
+    def _download_data(self, date: datetime, type: str) -> Union[pd.DataFrame, bool]:
 
         url = self._get_url(date, type=type)
         with requests.get(url) as response:
@@ -196,7 +196,7 @@ class CryptoDataReader:
                 return download
 
     @staticmethod
-    def last_day_of_month(date) -> datetime:
+    def last_day_of_month(date: datetime) -> datetime:
         return date.replace(day=monthrange(date.year, date.month)[1])
 
     def _get_dates_to_download(self) -> list:
