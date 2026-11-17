@@ -1,6 +1,6 @@
 [project]
 name = "egeaML"
-version = "1.1.0"
+version = "1.1.1"
 description = "Helper functions for Applied Machine Learning with Python"
 readme = "README.md"
 license = "MIT"
