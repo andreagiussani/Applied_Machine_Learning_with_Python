@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.1.1 (2026-11-17)
+
+### Bug Fixes
+
+- **security**: Define vulnerability reporting policy
+  ([`98ce3e2`](https://github.com/andreagiussani/Applied_Machine_Learning_with_Python/commit/98ce3e23b6cf25652a748d72724d2fde2223e901))
+
+
 ## v1.1.0 (2026-11-17)
 
 ### Bug Fixes
