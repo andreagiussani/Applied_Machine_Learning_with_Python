@@ -50,13 +50,24 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          base_sha="$(git rev-parse HEAD)"
-          uvx --from "python-semantic-release==10.5.3" semantic-release version --no-push --no-tag --no-vcs-release
-          if [[ "$(git rev-parse HEAD)" == "$base_sha" ]]; then
+          base_version="$(uv version --short)"
+          # Let semantic-release calculate and stage the version changes without
+          # asking it for a permanent GitHub Actions release output (which
+          # requires a release commit SHA). Commit those files below so the
+          # generated release branch still contains a normal release commit.
+          uvx --from "python-semantic-release==10.5.3" semantic-release version --no-commit --no-push --no-tag --no-vcs-release
+          version="$(uv version --short)"
+          if [[ "$version" == "$base_version" ]]; then
             echo "No release-worthy commits found."
             echo "has_release=false" >> "$GITHUB_OUTPUT"
           else
-            version="$(uv version --short)"
+            git add pyproject.toml uv.lock
+            if [[ -f CHANGELOG.md ]]; then
+              git add CHANGELOG.md
+            fi
+            git -c user.name="github-actions[bot]" \
+              -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+              commit -m "chore(release): $version"
             short_sha="$(git rev-parse --short HEAD)"
             release_branch="release/${version}/${short_sha}"
             git push origin "HEAD:refs/heads/$release_branch"
