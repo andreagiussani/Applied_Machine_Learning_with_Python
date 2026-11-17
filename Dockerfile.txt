@@ -1,4 +1,4 @@
-FROM python:3.7
+FROM python:3.13-slim
 
 WORKDIR /Applied_Machine_Learning_with_Python
 COPY requirements.txt /Applied_Machine_Learning_with_Python/
