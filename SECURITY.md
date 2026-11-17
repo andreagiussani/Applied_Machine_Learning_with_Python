@@ -2,20 +2,25 @@
 
 ## Supported Versions
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
+Security fixes are provided for the latest published release in the current
+`1.x` series. Please upgrade to the latest release before reporting an issue.
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
+| Version | Supported |
+| --- | --- |
+| Latest `1.x` release | Yes |
+| Earlier releases | No |
 
 ## Reporting a Vulnerability
 
-Use this section to tell people how to report a vulnerability.
+Please report suspected vulnerabilities privately through
+[GitHub's private vulnerability reporting form](https://github.com/andreagiussani/Applied_Machine_Learning_with_Python/security/advisories/new).
+Do not disclose vulnerability details in a public issue or discussion.
 
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+Please include the affected version, the impact, and steps to reproduce the
+issue. You should receive an acknowledgement within five business days and
+updates at least every ten business days while the report is being investigated.
+The maintainers will coordinate any public disclosure after a fix is available.
+
+If the private reporting form is unavailable, contact the repository owner
+through [their GitHub profile](https://github.com/andreagiussani) and ask for a
+private channel to submit the report.
