@@ -46,8 +46,8 @@ commit_parser = "conventional"
 build_command = "uv build"
 build_command_env = ["PATH"]
 
-[tool.semantic_release.branches.master]
-match = "master"
+[tool.semantic_release.branches.main]
+match = "main"
 prerelease = false
 
 [tool.semantic_release.remote]
