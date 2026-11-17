@@ -29,6 +29,9 @@ jobs:
         with:
           python-version: "3.13"
 
+      - name: Verify the existing PyPI release has a Git tag
+        run: git show-ref --verify --quiet refs/tags/v1.0.2
+
       - name: Calculate version, build, tag, and create GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
