@@ -5,6 +5,11 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      publish_version:
+        description: "Publish an already tagged project version (for example, 1.1.0)"
+        required: false
+        type: string
   pull_request:
     types: [closed]
 
@@ -15,7 +20,7 @@ permissions:
 
 jobs:
   prepare-release:
-    if: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && (github.event_name == 'workflow_dispatch' || (!contains(github.event.head_commit.message, 'chore(release):') && !contains(github.event.head_commit.message, '/release/'))) }}
+    if: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish_version == '')) }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -97,7 +102,7 @@ jobs:
         run: gh workflow run ci.yaml --ref "$RELEASE_BRANCH"
 
   publish-release:
-    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'release/')
+    if: ${{ (github.event_name == 'workflow_dispatch' && inputs.publish_version != '') || (github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'release/')) }}
     runs-on: ubuntu-latest
     environment:
       name: pypi
@@ -106,41 +111,50 @@ jobs:
       contents: write
       id-token: write
     steps:
-      - name: Checkout merged release commit
+      - name: Checkout release commit
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', inputs.publish_version) || github.event.pull_request.merge_commit_sha }}
 
       - name: Set up uv
         uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           python-version: "3.13"
 
-      - name: Verify release version and branch match
+      - name: Verify release version
         env:
           RELEASE_BRANCH: ${{ github.event.pull_request.head.ref }}
+          REQUESTED_VERSION: ${{ inputs.publish_version }}
         run: |
-          branch_version="${RELEASE_BRANCH#release/}"
-          branch_version="${branch_version%%/*}"
+          if [[ -n "$REQUESTED_VERSION" ]]; then
+            release_version="$REQUESTED_VERSION"
+          else
+            release_version="${RELEASE_BRANCH#release/}"
+            release_version="${release_version%%/*}"
+          fi
           project_version="$(uv version --short)"
-          if [[ "$branch_version" != "$project_version" ]]; then
-            echo "Release branch version $branch_version does not match project version $project_version" >&2
+          if [[ "$release_version" != "$project_version" ]]; then
+            echo "Requested release version $release_version does not match project version $project_version" >&2
             exit 1
           fi
 
       - name: Build distributions
         run: uv build --no-sources
 
-      - name: Create GitHub Release
+      - name: Create GitHub Release if missing
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TARGET_SHA: ${{ github.event.pull_request.merge_commit_sha }}
         run: |
           version="$(uv version --short)"
-          gh release create "v$version" dist/* \
-            --target "$TARGET_SHA" \
-            --title "v$version" \
-            --generate-notes
+          if gh release view "v$version" >/dev/null 2>&1; then
+            echo "GitHub Release v$version already exists; reusing it."
+          else
+            target_sha="$(git rev-parse HEAD)"
+            gh release create "v$version" dist/* \
+              --target "$target_sha" \
+              --title "v$version" \
+              --generate-notes
+          fi
 
       - name: Publish distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
