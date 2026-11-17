@@ -98,7 +98,6 @@ Replace `<YOUR_ENV>` with the kernel name you want to see in Jupyter.
 If you have errata for the book, please submit them via the [BUP](https://bup.egeaonline.it) website. In case of possible mistakes within the book-specific module, you can submit a fixed-version as a pull-request in this repository.
 
 ## How to Cite this Book
-
 ```tex
 @book{giussani2020,
 	TITLE="Applied Machine Learning with Python",
