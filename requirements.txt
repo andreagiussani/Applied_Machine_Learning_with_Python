@@ -4,7 +4,7 @@ gensim==4.3.1
 imbalanced-learn==0.5.0
 yfinance==0.2.9
 matplotlib==3.7.1
-nltk==3.8.1
+nltk==3.10.4
 pandas==1.5.3
 pytest==7.2.0
 requests==2.28.0
