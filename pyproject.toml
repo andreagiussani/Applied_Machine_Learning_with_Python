@@ -1,0 +1,40 @@
+[project]
+name = "egeaML"
+version = "1.0.2"
+description = "Helper functions for Applied Machine Learning with Python"
+readme = "README.md"
+license = "MIT"
+authors = [{ name = "Andrea Giussani" }]
+requires-python = ">=3.13"
+dependencies = [
+    "catboost==1.2.10",
+    "gensim==4.4.0",
+    "imbalanced-learn==0.14.2",
+    "matplotlib==3.11.2",
+    "nltk==3.10.4",
+    "pandas==3.1.1",
+    "requests==2.34.2",
+    "scikit-learn==1.9.1",
+    "seaborn==0.13.2",
+    "shap==0.54.1",
+    "tensorflow==2.21.0",
+    "wget==3.2",
+    "xgboost==3.4.1",
+    "yfinance==1.8.0",
+]
+
+[dependency-groups]
+dev = [
+    "coverage==7.17.3",
+    "pytest==9.2.0",
+]
+
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["egeaML*"]
+
+[tool.setuptools.package-data]
+egeaML = ["data/**/*"]
