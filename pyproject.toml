@@ -43,8 +43,9 @@ egeaML = ["data/**/*"]
 version_toml = ["pyproject.toml:project.version"]
 tag_format = "v{version}"
 commit_parser = "conventional"
-build_command = "uv build"
+build_command = "uv lock && uv build"
 build_command_env = ["PATH"]
+commit_message = "chore(release): {version}"
 
 [tool.semantic_release.branches.main]
 match = "main"
