@@ -1,2 +1,0 @@
-include Readme.md
-recursive-include egeaML/data *
